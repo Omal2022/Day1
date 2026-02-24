@@ -1,6 +1,7 @@
 import { timeStamp } from "console";
 import mongoose, { Schema } from "mongoose";
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from "bcrypt"
 // _id: uuidv4,
 
 const userSchema = new Schema({
@@ -32,5 +33,20 @@ const userSchema = new Schema({
     },
 
 }, { timestamps: true })
+
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) {
+        return 
+    }
+    this.password = await bcrypt.hash(this.password, 10)
+})
+
+
+userSchema.methods.comparePassword = async function (password) {
+    if (!this.password) {
+        throw new Error("User has no pssword set")
+    }
+    return await bcrypt.compare(password, this.password)
+}
 
 export const User = mongoose.model("UserModel", userSchema)
